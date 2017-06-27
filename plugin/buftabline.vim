@@ -49,8 +49,10 @@ endfunction
 let s:dirsep = fnamemodify(getcwd(),':p')[-1:]
 let s:centerbuf = winbufnr(0)
 function! buftabline#render()
+  let show_none = g:buftabline_numbers == 0
 	let show_num = g:buftabline_numbers == 1
 	let show_ord = g:buftabline_numbers == 2
+  let show_both = g:buftabline_numbers == 3
 	let show_mod = g:buftabline_indicators
 	let lpad     = g:buftabline_separators ? nr2char(0x23B8) : ' '
 
@@ -64,7 +66,8 @@ function! buftabline#render()
 	let currentbuf = winbufnr(0)
 	let screen_num = 0
 	for bufnum in bufnums
-		let screen_num = show_num ? bufnum : show_ord ? screen_num + 1 : ''
+    let ord = screen_num + 1
+		let screen_num = show_none ? '' : ( show_num ? bufnum : ( show_ord ? ord : show_both ? (screen_num + 1) . '•' . bufnum : ''))
 		let tab = { 'num': bufnum }
 		let tab.hilite = currentbuf == bufnum ? 'Current' : bufwinnr(bufnum) > 0 ? 'Active' : 'Hidden'
 		if currentbuf == bufnum | let [centerbuf, s:centerbuf] = [bufnum, bufnum] | endif
