@@ -67,13 +67,47 @@ function! buftabline#render()
 	let screen_num = 0
 	for bufnum in bufnums
     let ord = screen_num + 1
-		let screen_num = show_none ? '' : ( show_num ? bufnum : ( show_ord ? ord : show_both ? (screen_num + 1) . '•' . bufnum : ''))
+    let screen_buf=bufnum
+    let buflen=len(bufnum)
+    let screen_buf=''
+    let i=0
+    while i < buflen
+      let part=bufnum[i:i]
+      let char=part
+      if part == 9
+        let part='₉'
+      elseif part == 8
+        let part='₈'
+      elseif part == 7
+        let part='₇'
+      elseif part == 6
+        let part='₆'
+      elseif part == 5
+        let part='₅'
+      elseif part == 4
+        let part='₄'
+      elseif part == 3
+        let part='₃'
+      elseif part == 2
+        let part='₂'
+      elseif part == 1
+        let part='₁'
+      elseif part == 0
+        let part='₀'
+      endif
+
+      let screen_buf.=part
+      let i+=1
+    endwhile
+    let screen_buf='₍' . screen_buf . '₎' 
+    let separator='•' 
+		let screen_num = show_none ? '' : ( show_num ? screen_buf : ( show_ord ? ord : show_both ? ord : ''))
 		let tab = { 'num': bufnum }
 		let tab.hilite = currentbuf == bufnum ? 'Current' : bufwinnr(bufnum) > 0 ? 'Active' : 'Hidden'
 		if currentbuf == bufnum | let [centerbuf, s:centerbuf] = [bufnum, bufnum] | endif
 		let bufpath = bufname(bufnum)
 		if strlen(bufpath)
-			let tab.path = fnamemodify(bufpath, ':p:~:.')
+			let tab.path = fnamemodify(bufpath, ':p:~:.').screen_buf
 			let tab.sep = strridx(tab.path, s:dirsep, strlen(tab.path) - 2) " keep trailing dirsep
 			let tab.label = tab.path[tab.sep + 1:]
 			let pre = ( show_mod && getbufvar(bufnum, '&mod') ? '+' : '' ) . screen_num
