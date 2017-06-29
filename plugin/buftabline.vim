@@ -48,6 +48,30 @@ endfunction
 
 let s:dirsep = fnamemodify(getcwd(),':p')[-1:]
 let s:centerbuf = winbufnr(0)
+
+function ConvertNumber(table,value)
+  let vlen=len(a:value)
+  let i=0
+  let r=''
+  while i < vlen
+    let part=a:value[i:i]
+    let char=a:table[part]
+    let r.=char
+    let i+=1
+  endwhile
+  return r
+endfunction
+
+function ToSub(value)
+  let numbers=['₀','₁','₂','₃','₄','₅','₆','₇','₈','₉']
+  return ConvertNumber(numbers,a:value)
+endfunction
+
+function ToSup(value)
+  let numbers=['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹']
+  return ConvertNumber(numbers,a:value)
+endfunction
+
 function! buftabline#render()
   let show_none = g:buftabline_numbers == 0
 	let show_num = g:buftabline_numbers == 1
@@ -67,51 +91,25 @@ function! buftabline#render()
 	let screen_num = 0
 	for bufnum in bufnums
     let ord = screen_num + 1
-    let screen_buf=bufnum
-    let buflen=len(bufnum)
-    let screen_buf=''
-    let i=0
-    while i < buflen
-      let part=bufnum[i:i]
-      let char=part
-      if part == 9
-        let part='₉'
-      elseif part == 8
-        let part='₈'
-      elseif part == 7
-        let part='₇'
-      elseif part == 6
-        let part='₆'
-      elseif part == 5
-        let part='₅'
-      elseif part == 4
-        let part='₄'
-      elseif part == 3
-        let part='₃'
-      elseif part == 2
-        let part='₂'
-      elseif part == 1
-        let part='₁'
-      elseif part == 0
-        let part='₀'
-      endif
-
-      let screen_buf.=part
-      let i+=1
-    endwhile
-    let screen_buf='₍' . screen_buf . '₎' 
+    let buffer_prefix='ᵇᵘᶠ˙'
+    " let buffer_prefix='ᵇ'
+    " let buffer_prefix='˙'
+    " let buffer_prefix=''
+    let screen_buf=buffer_prefix.ToSup(bufnum)
     let separator='•' 
 		let screen_num = show_none ? '' : ( show_num ? screen_buf : ( show_ord ? ord : show_both ? ord : ''))
+    let suffix='⁽'.ToSup(screen_num).''.screen_buf.'⁾'
+    let suffix=ToSup(screen_num)
 		let tab = { 'num': bufnum }
 		let tab.hilite = currentbuf == bufnum ? 'Current' : bufwinnr(bufnum) > 0 ? 'Active' : 'Hidden'
 		if currentbuf == bufnum | let [centerbuf, s:centerbuf] = [bufnum, bufnum] | endif
 		let bufpath = bufname(bufnum)
 		if strlen(bufpath)
-			let tab.path = fnamemodify(bufpath, ':p:~:.').screen_buf
+			let tab.path = fnamemodify(bufpath, ':p:~:.').''.screen_buf.( show_mod && getbufvar(bufnum, '&mod') ? '⦿' : '' )
 			let tab.sep = strridx(tab.path, s:dirsep, strlen(tab.path) - 2) " keep trailing dirsep
 			let tab.label = tab.path[tab.sep + 1:]
-			let pre = ( show_mod && getbufvar(bufnum, '&mod') ? '+' : '' ) . screen_num
-			let tab.pre = strlen(pre) ? pre . ' ' : ''
+			let pre =  suffix
+			let tab.pre = strlen(pre) ? pre . '' : ''
 			let tabs_per_tail[tab.label] = get(tabs_per_tail, tab.label, 0) + 1
 			let path_tabs += [tab]
 		elseif -1 < index(['nofile','acwrite'], getbufvar(bufnum, '&buftype')) " scratch buffer
